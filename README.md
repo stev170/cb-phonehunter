@@ -41,9 +41,17 @@ CB-PhoneHunter menganalisis nomor telepon di berbagai sumber terbuka dan gratis:
 - pip (Python Package Manager)
 - Koneksi internet
 
-### Langkah-langkah
+### Android / Termux
 
-#### Linux / macOS / Windows (Git Bash)
+```bash
+pkg update && pkg upgrade
+pkg install python git
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python cb_phone_hunter.py
+```
+
+### Linux / macOS / Windows (Git Bash)
 
 ```bash
 # 1. Kloning repositori
@@ -156,14 +164,6 @@ CB-PhoneHunter mendukung berbagai format input. Selalu sertakan **kode negara** 
 +81 90 1234 5678     (Jepang)
 ```
 
-### Perintah Khusus
-```
-keluar               (Keluar dari program)
-exit                 (Keluar dari program)
-quit                 (Keluar dari program)
-q                    (Keluar dari program)
-```
-
 ---
 
 ## 🔧 Persyaratan Sistem
@@ -175,7 +175,7 @@ q                    (Keluar dari program)
   - `phonenumbers` ≥ 8.13.0
   - `dnspython` (untuk DNS lookup)
 - **Koneksi Internet:** Diperlukan untuk verifikasi online
-- **Sistem Operasi:** Linux, macOS, Windows
+- **Sistem Operasi:** Linux, macOS, Windows, Termux
 
 ---
 
@@ -191,38 +191,6 @@ dnspython>=2.3.0
 ```
 
 Instalasi otomatis saat pertama kali menjalankan program jika belum terinstal.
-
----
-
-## 💡 Tips & Trik
-
-### 1. Analisis Cepat
-Gunakan `0` untuk menjalankan semua modul sekaligus:
-```
-▸ Pilihan: 0
-```
-
-### 2. Modul Spesifik
-Pilih modul tertentu dengan nomor:
-```
-▸ Pilihan: 2,5,6
-```
-(Menjalankan Veriphone, WhatsApp, dan Telegram)
-
-### 3. Batch Analysis
-Program berjalan dalam loop interaktif, masukkan nomor baru tanpa perlu restart:
-```
-▸ Nomor: +62812...
-[analisis...]
-▸ Analisis nomor lain? +62821...
-```
-
-### 4. Format Fleksibel
-Semua format di bawah valid:
-- `+62 812 3456-7890`
-- `+628123456789`
-- `+62-812-3456-7890`
-- `62812 3456 7890` (tanpa +, system auto-detect)
 
 ---
 
@@ -244,37 +212,15 @@ Alat ini dirancang **HANYA** untuk:
 - ❌ Mengumpulkan data pribadi untuk dijual
 - ❌ Mengganggu privasi orang lain
 
-### Tanggung Jawab Pengguna
-Pengguna sepenuhnya bertanggung jawab atas penggunaan alat ini. Ciberbrigada dan pengembang **TIDAK BERTANGGUNG JAWAB** atas:
-- Penyalahgunaan alat ini
-- Kerusakan atau kerugian yang timbul
-- Pelanggaran hukum atau regulasi
-- Pelanggaran privasi atau hak cipta
-
 ---
 
 ## 🛡️ Ciberbrigada OSINT Suite
-
-Koleksi lengkap alat OSINT:
 
 - 📧 **CB-EmailHunter** — Email OSINT → [lihat repo](https://github.com/ciberbrigada/cb-emailhunter)
 - 👤 **CB-UserHunter** — Username OSINT → [lihat repo](https://github.com/ciberbrigada/cb-userhunter)
 - 📱 **CB-PhoneHunter** — Phone OSINT *(repositori ini)*
 - 🌐 **CB-DomainHunter** — OSINT domain & IP *(segera hadir)*
 - 📸 **CB-InstaHunter** — Instagram OSINT *(segera hadir)*
-
----
-
-## 🐛 Pelaporan Bug & Saran
-
-Jika Anda menemukan bug atau memiliki saran perbaikan:
-
-1. Periksa **Issues** yang sudah ada untuk menghindari duplikasi
-2. Buka **Issue baru** dengan:
-   - Deskripsi masalah yang jelas
-   - Langkah reproduksi
-   - Screenshot jika relevan
-   - Versi Python & sistem operasi
 
 ---
 
@@ -286,63 +232,8 @@ Lihat file [LICENSE_phonehunter](./LICENSE_phonehunter) untuk detail lengkap.
 
 ---
 
-## 👨‍💻 Kontribusi
-
-Kontribusi dari komunitas sangat diterima! Cara berkontribusi:
-
-1. Fork repositori
-2. Buat branch fitur (`git checkout -b fitur/FiturBaru`)
-3. Commit perubahan (`git commit -m 'Tambah fitur baru'`)
-4. Push ke branch (`git push origin fitur/FiturBaru`)
-5. Buka Pull Request
-
----
-
-## ❓ Pertanyaan Umum (FAQ)
-
-### P: Apakah gratis?
-**J:** Ya, 100% gratis selamanya.
-
-### P: Apakah perlu API key?
-**J:** Tidak. Alat ini menggunakan API gratis dan endpoint publik.
-
-### P: Bagaimana jika mendapat error "Rate limit"?
-**J:** Tunggu beberapa menit lalu coba lagi. Beberapa API memiliki batasan permintaan.
-
-### P: Bisa offline?
-**J:** Modul 1 (Analisis Lokal) bisa offline. Modul lain memerlukan internet.
-
-### P: Nomor mana yang bisa dianalisis?
-**J:** Nomor valid dari seluruh dunia dengan kode negara internasional.
-
-### P: Apakah privat atau kirim data kemana-mana?
-**J:** Data hanya dikirim ke API publik yang ditentukan. Program tidak menyimpan log atau data Anda.
-
----
-
-## 🔗 Link Penting
-
-- 🌐 **Website:** https://ciberbrigada.com
-- 📘 **GitHub:** https://github.com/ciberbrigada
-- 💼 **LinkedIn:** https://www.linkedin.com/company/ciberbrigada
-- 📧 **Email:** contact@ciberbrigada.com
-
----
-
-## 🙏 Ucapan Terima Kasih
-
-- **Fgunther** — Developer & Creator
-- **Ciberbrigada Team** — OSINT Suite Development
-- **Komunitas** — Feedback & Saran
-
----
-
 <p align="center">
   <b>Dibuat dengan ❤️ oleh Ciberbrigada</b>
   <br/>
   <sub>Untuk tujuan keamanan, penelitian, dan pendidikan</sub>
-  <br/><br/>
-  <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square"/>
-  <img src="https://img.shields.io/badge/Maintained-Yes-brightgreen?style=flat-square"/>
-  <img src="https://img.shields.io/badge/Language-Python-blue?style=flat-square"/>
 </p>
