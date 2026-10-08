@@ -13,21 +13,39 @@ import socket
 import urllib.parse
 import hashlib
 
-try:
+
+def ensure_dependencies():
+    try:
+        import requests
+        import phonenumbers
+        from phonenumbers import geocoder, carrier, timezone as pn_timezone
+        import dns.resolver
+        from colorama import init, Fore, Style
+        init(autoreset=True)
+        return
+    except ImportError:
+        pass
+
+    is_termux = (
+        os.environ.get("PREFIX", "").startswith("/data/data/com.termux")
+        or os.path.exists("/data/data/com.termux/files/usr/bin/pkg")
+        or os.environ.get("ANDROID_ROOT") is not None
+    )
+
+    if is_termux:
+        os.system("python -m pip install requests colorama phonenumbers dnspython -q")
+    else:
+        os.system("python -m pip install requests colorama phonenumbers dnspython --break-system-packages -q")
+
     import requests
     import phonenumbers
     from phonenumbers import geocoder, carrier, timezone as pn_timezone
     import dns.resolver
     from colorama import init, Fore, Style
     init(autoreset=True)
-except ImportError:
-    os.system("pip install requests colorama phonenumbers dnspython --break-system-packages -q")
-    import requests
-    import phonenumbers
-    from phonenumbers import geocoder, carrier, timezone as pn_timezone
-    import dns.resolver
-    from colorama import init, Fore, Style
-    init(autoreset=True)
+
+
+ensure_dependencies()
 
 # ── Warna ─────────────────────────────────────────────────────────────[...]
 C  = Fore.CYAN
@@ -139,7 +157,7 @@ def fail(msg):  print(f"  {R}[✗]{RS} {D}{msg}{RS}")
 def info(msg):  print(f"  {C}[i]{RS} {W}{msg}{RS}")
 def dato(k, v): print(f"  {C}  ▸ {D}{k}:{RS} {W}{B}{v}{RS}")
 
-# ══════════��═══════════════════════════════════════════════════════[...]
+# ══════════════════════════════════════════════════════════════════[...]
 # MODUL 1 — ANALISIS LOKAL (phonenumbers — 100% offline)
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_analisis(phone_raw):
@@ -385,7 +403,7 @@ def modulo_telegram(fmt_e164):
 
 # ══════════════════════════════════════════════════════════════════[...]
 # MODUL 7 — GRAVATAR (profil terkait hash nomor)
-# ══════════════════════════════════════════════════════════════════[...]
+# ════���═════════════════════════════════════════════════════════════[...]
 def modulo_gravatar(fmt_e164):
     sep("GRAVATAR — Profil terkait")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").strip()
