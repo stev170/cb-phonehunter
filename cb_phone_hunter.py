@@ -53,7 +53,7 @@ import socket
 import urllib.parse
 import hashlib
 
-# ── Warna ─────────────────────────────────────────────────────────────[...]
+# ── Warna ─────────────────────────────────────────────────────────────[.[...]
 C  = Fore.CYAN
 Y  = Fore.YELLOW
 G  = Fore.GREEN
@@ -219,7 +219,7 @@ def modulo_analisis(phone_raw):
         warn("Masukkan kode negara. Contoh: +62 812 3456-7890")
         return None, None, None, None
 
-# ═══════════════════════════════════════════════════��══════════════[...]
+# ═══════════════════════════════════════════════════════════════════[...]
 # MODUL 2 — VERIPHONE API (gratis, tanpa key, data nyata)
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_veriphone(fmt_e164):
@@ -330,7 +330,7 @@ def modulo_dns(fmt_e164, region):
         for op in country_carriers[region]:
             print(f"    {D}• {op}{RS}")
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ════���═════════════════════════════════════════════════════════════[...]
 # MODUL 5 — WHATSAPP (verifikasi nyata)
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_whatsapp(fmt_e164):
@@ -441,7 +441,168 @@ def modulo_gravatar(fmt_e164):
         warn(f"Gravatar tidak tersedia: {type(e).__name__}")
 
 # ══════════════════════════════════════════════════════════════════[...]
-# MODUL 8 — RINGKASAN INTELIGENSI
+# MODUL 8 — TWITTER/X (pencarian yang valid)
+# ══════════════════════════════════════════════════════════════════[...]
+def modulo_twitter(fmt_e164):
+    sep("TWITTER/X — Pencarian & hasil valid")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    queries = [
+        fmt_e164,
+        phone_clean,
+        f"{phone_clean} phone",
+        f"\"{fmt_e164}\"",
+    ]
+
+    found = False
+    for query in queries:
+        url = f"https://x.com/search?q={urllib.parse.quote(query)}&src=typed_query"
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+            if r.status_code == 200:
+                ok("Pencarian Twitter/X dibuat dengan URL yang valid")
+                dato("Nomor", fmt_e164)
+                dato("URL pencarian", url)
+                info("Hasil real hanya terlihat di halaman Twitter/X; situs dapat memblokir atau membatasi search index")
+                found = True
+                break
+        except Exception:
+            continue
+
+    if not found:
+        warn("Tidak dapat mengakses pencarian Twitter/X secara langsung dari terminal")
+        info(f"Coba buka: https://x.com/search?q={urllib.parse.quote(fmt_e164)}")
+
+# ══════════════════════════════════════════════════════════════════[...]
+# MODUL 9 — FACEBOOK (pencarian yang valid)
+# ══════════════════════════════════════════════════════════════════[...]
+def modulo_facebook(fmt_e164):
+    sep("FACEBOOK — Pencarian profil")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.facebook.com/search/top/?q={urllib.parse.quote(fmt_e164)}",
+        f"https://www.facebook.com/search/people/?q={urllib.parse.quote(fmt_e164)}",
+        f"https://www.facebook.com/search/top/?q={urllib.parse.quote(phone_clean)}",
+    ]
+
+    for url in urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+            if r.status_code == 200:
+                ok("Pencarian Facebook dibuat dengan URL yang valid")
+                dato("Nomor", fmt_e164)
+                dato("URL pencarian", url)
+                info("Facebook sering membatasi pencarian data telepon, jadi hasil bisa terbatas atau tak langsung terlihat")
+                return
+        except Exception:
+            continue
+
+    warn("Tidak dapat membuka pencarian Facebook dari terminal")
+    info(f"Coba buka: https://www.facebook.com/search/people/?q={urllib.parse.quote(fmt_e164)}")
+
+# ══════════════════════════════════════════════════════════════════[...]
+# MODUL 10 — TIKTOK (pencarian yang valid)
+# ══════════════════════════════════════════════════════════════════[...]
+def modulo_tiktok(fmt_e164):
+    sep("TIKTOK — Pencarian akun")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.tiktok.com/search?q={urllib.parse.quote(fmt_e164)}",
+        f"https://www.tiktok.com/search?q={urllib.parse.quote(phone_clean)}",
+        f"https://www.tiktok.com/search?q={urllib.parse.quote(f'"{fmt_e164}"')}",
+    ]
+
+    for url in urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+            if r.status_code == 200:
+                ok("Pencarian TikTok dibuat dengan URL yang valid")
+                dato("Nomor", fmt_e164)
+                dato("URL pencarian", url)
+                info("TikTok tidak selalu menampilkan nomor telepon sebagai hasil pencarian publik")
+                return
+        except Exception:
+            continue
+
+    warn("Tidak dapat membuka pencarian TikTok dari terminal")
+    info(f"Coba buka: https://www.tiktok.com/search?q={urllib.parse.quote(fmt_e164)}")
+
+# ══════════════════════════════════════════════════════════════════[...]
+# MODUL 11 — INSTAGRAM (pencarian valid, terbatas)
+# ══════════════════════════════════════════════════════════════════[...]
+def modulo_instagram(fmt_e164):
+    sep("INSTAGRAM — Pencarian akun")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(fmt_e164)}",
+        f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(phone_clean)}",
+        f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(f'"{fmt_e164}"')}",
+    ]
+
+    for url in urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+            if r.status_code == 200:
+                ok("Pencarian Instagram dibuat dengan URL yang valid")
+                dato("Nomor", fmt_e164)
+                dato("URL pencarian", url)
+                info("Instagram tidak menyediakan hasil pencarian nomor telpon yang dapat diandalkan secara publik")
+                return
+        except Exception:
+            continue
+
+    warn("Tidak dapat membuka pencarian Instagram dari terminal")
+    info(f"Coba buka: https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(fmt_e164)}")
+
+# ══════════════════════════════════════════════════════════════════[...]
+# MODUL 12 — LINKEDIN (pencarian valid)
+# ══════════════════════════════════════════════════════════════════[...]
+def modulo_linkedin(fmt_e164):
+    sep("LINKEDIN — Pencarian profil profesional")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.linkedin.com/search/results/people/?keywords={urllib.parse.quote(fmt_e164)}",
+        f"https://www.linkedin.com/search/results/people/?keywords={urllib.parse.quote(phone_clean)}",
+        f"https://www.linkedin.com/search/results/all/?keywords={urllib.parse.quote(f'phone:{phone_clean}')}",
+    ]
+
+    for url in urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+            if r.status_code == 200:
+                ok("Pencarian LinkedIn dibuat dengan URL yang valid")
+                dato("Nomor", fmt_e164)
+                dato("URL pencarian", url)
+                info("LinkedIn membatasi hasil yang muncul di publik, tetapi tautan pencarian tetap valid")
+                return
+        except Exception:
+            continue
+
+    warn("Tidak dapat membuka pencarian LinkedIn secara langsung")
+    info(f"Coba buka: https://www.linkedin.com/search/results/people/?keywords={urllib.parse.quote(fmt_e164)}")
+
+# ══════════════════════════════════════════════════════════════════[...]
+# MODUL 13 — GETCONTACT (database kontak global)
+# ══════════════════════════════════════════════════════════════════[...]
+def modulo_getcontact(fmt_e164):
+    sep("GETCONTACT — Database kontak global")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    url = f"https://www.getcontact.com/phone/{phone_clean}"
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+        if r.status_code == 200:
+            ok("URL GetContact valid dan dapat dibuka")
+            dato("Nomor", fmt_e164)
+            dato("URL profil", url)
+            info("GetContact adalah aplikasi kontak yang menggabungkan data nomor; hasil publik sangat bergantung pada database dan privasi")
+        else:
+            warn(f"GetContact merespons {r.status_code}")
+            info(f"Coba buka manual: {url}")
+    except Exception as e:
+        warn(f"GetContact tidak dapat diakses: {type(e).__name__}")
+        info(f"Coba buka manual: {url}")
+
+# ══════════════════════════════════════════════════════════════════[...]
+# MODUL 14 — RINGKASAN INTELIGENSI
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_resumen(phone_raw, fmt_e164, fmt_intl, region, parsed):
     sep("RINGKASAN INTELIGENSI")
@@ -494,6 +655,12 @@ def main():
             ("5", "WhatsApp         — Apakah punya akun aktif?"),
             ("6", "Telegram         — Apakah punya akun aktif?"),
             ("7", "Gravatar         — Profil terkait nomor"),
+            ("8", "Twitter/X        — Pencarian & verifikasi"),
+            ("9", "Facebook         — Pencarian profil"),
+            ("10", "TikTok          — Pencarian & verifikasi"),
+            ("11", "Instagram       — Pencarian pengguna"),
+            ("12", "LinkedIn        — Pencarian profil profesional"),
+            ("13", "GetContact      — Database kontak global"),
             ("0", "SEMUA MODUL"),
         ]
         for num, desc in modulos:
@@ -502,11 +669,11 @@ def main():
 
         print()
         try:
-            sel = input(f"  {C}▸ Pilihan (contoh: 0 atau 2,5,6):{RS} ").strip()
+            sel = input(f"  {C}▸ Pilihan (contoh: 0 atau 2,5,6,8):{RS} ").strip()
         except (KeyboardInterrupt, EOFError):
             sys.exit(0)
 
-        selected = ["2","3","4","5","6","7"] if sel == "0" else [s.strip() for s in sel.split(",")]
+        selected = ["2","3","4","5","6","7","8","9","10","11","12","13"] if sel == "0" else [s.strip() for s in sel.split(",")]
         print()
 
         if "2" in selected: modulo_veriphone(fmt_e164)
@@ -515,6 +682,12 @@ def main():
         if "5" in selected: modulo_whatsapp(fmt_e164)
         if "6" in selected: modulo_telegram(fmt_e164)
         if "7" in selected: modulo_gravatar(fmt_e164)
+        if "8" in selected: modulo_twitter(fmt_e164)
+        if "9" in selected: modulo_facebook(fmt_e164)
+        if "10" in selected: modulo_tiktok(fmt_e164)
+        if "11" in selected: modulo_instagram(fmt_e164)
+        if "12" in selected: modulo_linkedin(fmt_e164)
+        if "13" in selected: modulo_getcontact(fmt_e164)
 
         modulo_resumen(phone_raw, fmt_e164, fmt_intl, region, parsed)
 
