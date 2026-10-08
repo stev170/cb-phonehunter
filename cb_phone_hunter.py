@@ -28,7 +28,7 @@ except ImportError:
         os.system("python -m pip install requests colorama phonenumbers dnspython -q 2>/dev/null")
     else:
         os.system("pip install requests colorama phonenumbers dnspython --break-system-packages -q 2>/dev/null")
-    
+
     try:
         import requests
         import phonenumbers
@@ -54,13 +54,13 @@ import urllib.parse
 import hashlib
 
 # ── Warna ─────────────────────────────────────────────────────────────[.[...]
-C  = Fore.CYAN
-Y  = Fore.YELLOW
-G  = Fore.GREEN
-R  = Fore.RED
-W  = Fore.WHITE
-D  = Fore.WHITE + Style.DIM
-B  = Style.BRIGHT
+C = Fore.CYAN
+Y = Fore.YELLOW
+G = Fore.GREEN
+R = Fore.RED
+W = Fore.WHITE
+D = Fore.WHITE + Style.DIM
+B = Style.BRIGHT
 RS = Style.RESET_ALL
 
 HEADERS = {
@@ -74,7 +74,6 @@ HEADERS = {
 
 HEADERS_JSON = {**HEADERS, "Accept": "application/json, text/plain, */*"}
 
-# Peta kode negara → nama negara
 COUNTRY_NAMES = {
     "AR": "Argentina", "US": "Amerika Serikat", "MX": "Meksiko",
     "BR": "Brasil", "CO": "Kolombia", "CL": "Chili", "PE": "Peru",
@@ -105,14 +104,47 @@ TIPOS_LINEA = {
     27: "❓ TIDAK DIKETAHUI",
 }
 
-# ══════════════════════════════════════════════════════════════════[...]
-# BANNER
-# ══════════════════════════════════════════════════════════════════[...]
+# ---------- helpers ----------
+def sep(titulo=""):
+    if titulo:
+        pad = (56 - len(titulo)) // 2
+        print(f"\n{C}{'─'*pad} {B}{titulo}{RS}{C} {'─'*pad}{RS}")
+    else:
+        print(f"{D}{'─'*60}{RS}")
+
+
+def ok(msg):
+    print(f"  {G}{B}[✓]{RS} {W}{msg}{RS}")
+
+
+def warn(msg):
+    print(f"  {Y}[!]{RS} {Y}{msg}{RS}")
+
+
+def fail(msg):
+    print(f"  {R}[✗]{RS} {D}{msg}{RS}")
+
+
+def info(msg):
+    print(f"  {C}[i]{RS} {W}{msg}{RS}")
+
+
+def dato(k, v):
+    print(f"  {C}  ▸ {D}{k}:{RS} {W}{B}{v}{RS}")
+
+
+def safe_request(url, timeout=10):
+    try:
+        return requests.get(url, headers=HEADERS, timeout=timeout, allow_redirects=True)
+    except Exception:
+        return None
+
+
 def banner():
     os.system("cls" if os.name == "nt" else "clear")
     CYAN = '\033[96m'; ORAN = '\033[38;5;208m'
-    DIM  = '\033[2m\033[37m'; BOLD = '\033[1m'
-    YEL  = '\033[33m'; RST  = '\033[0m'
+    DIM = '\033[2m\033[37m'; BOLD = '\033[1m'
+    YEL = '\033[33m'; RST = '\033[0m'
     logo = [
         "              ...::::...               ",
         "              ..:::+: ....             ",
@@ -147,25 +179,8 @@ def banner():
     print(f"  {YEL}⚠  Hanya untuk penggunaan yang sah, etis, dan edukatif  ⚠{RST}")
     print()
 
-# ══════════════════════════════════════════════════════════════════[...]
-# HELPERS
-# ══════════════════════════════════════════════════════════════════[...]
-def sep(titulo=""):
-    if titulo:
-        pad = (56 - len(titulo)) // 2
-        print(f"\n{C}{'─'*pad} {B}{titulo}{RS}{C} {'─'*pad}{RS}")
-    else:
-        print(f"{D}{'─'*60}{RS}")
 
-def ok(msg):    print(f"  {G}{B}[✓]{RS} {W}{msg}{RS}")
-def warn(msg):  print(f"  {Y}[!]{RS} {Y}{msg}{RS}")
-def fail(msg):  print(f"  {R}[✗]{RS} {D}{msg}{RS}")
-def info(msg):  print(f"  {C}[i]{RS} {W}{msg}{RS}")
-def dato(k, v): print(f"  {C}  ▸ {D}{k}:{RS} {W}{B}{v}{RS}")
-
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 1 — ANALISIS LOKAL (phonenumbers — 100% offline)
-# ══════════════════════════════════════════════════════════════════[...]
+# ---------- modul 1 ----------
 def modulo_analisis(phone_raw):
     sep("ANALISIS NOMOR")
     try:
@@ -174,54 +189,52 @@ def modulo_analisis(phone_raw):
         except Exception:
             parsed = phonenumbers.parse(phone_raw, "AR")
 
-        es_valido  = phonenumbers.is_valid_number(parsed)
+        es_valido = phonenumbers.is_valid_number(parsed)
         es_posible = phonenumbers.is_possible_number(parsed)
 
         fmt_intl = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
         fmt_e164 = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
-        fmt_nac  = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.NATIONAL)
+        fmt_nac = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.NATIONAL)
 
         dato("Nomor internasional", fmt_intl)
-        dato("Format E164",         fmt_e164)
-        dato("Format nasional",     fmt_nac)
-        dato("Valid",               f"{'✓ YA' if es_valido else '✗ TIDAK'}")
-        dato("Mungkin",              f"{'✓ YA' if es_posible else '✗ TIDAK'}")
+        dato("Format E164", fmt_e164)
+        dato("Format nasional", fmt_nac)
+        dato("Valid", f"{'✓ YA' if es_valido else '✗ TIDAK'}")
+        dato("Mungkin", f"{'✓ YA' if es_posible else '✗ TIDAK'}")
 
         region = phonenumbers.region_code_for_number(parsed)
         pais_nombre = COUNTRY_NAMES.get(region, geocoder.description_for_number(parsed, "id") or "Tidak diketahui")
-        dato("Negara",                 pais_nombre)
-        dato("Kode wilayah",     region or "—")
-        dato("Kode negara",       f"+{parsed.country_code}")
+        dato("Negara", pais_nombre)
+        dato("Kode wilayah", region or "—")
+        dato("Kode negara", f"+{parsed.country_code}")
 
         pais_geo = geocoder.description_for_number(parsed, "id")
         if pais_geo and pais_geo != pais_nombre:
-            dato("Zona geografis",  pais_geo)
+            dato("Zona geografis", pais_geo)
 
         op = carrier.name_for_number(parsed, "id")
-        dato("Operator",            op if op else "Tidak tersedia di basis lokal")
+        dato("Operator", op if op else "Tidak tersedia di basis lokal")
 
         zonas = list(pn_timezone.time_zones_for_number(parsed))
-        dato("Zona waktu",         ", ".join(zonas) if zonas else "Tidak tersedia")
+        dato("Zona waktu", ", ".join(zonas) if zonas else "Tidak tersedia")
 
         tipo = phonenumbers.number_type(parsed)
-        dato("Tipe line",        TIPOS_LINEA.get(tipo, "❓ Tidak diketahui"))
+        dato("Tipe line", TIPOS_LINEA.get(tipo, "❓ Tidak diketahui"))
 
-        dato("Nomor nasional",      str(parsed.national_number))
-        dato("Kode area",       str(parsed.national_number)[:3])
+        dato("Nomor nasional", str(parsed.national_number))
+        dato("Kode area", str(parsed.national_number)[:3])
 
         if not es_valido:
             warn("Nomor ini tampaknya tidak valid untuk wilayah yang terdeteksi")
 
         return fmt_e164, fmt_intl, parsed, region
-
     except Exception as e:
         fail(f"Error saat menganalisis: {e}")
         warn("Masukkan kode negara. Contoh: +62 812 3456-7890")
         return None, None, None, None
 
-# ═══════════════════════════════════════════════════════════════════[...]
-# MODUL 2 — VERIPHONE API (gratis, tanpa key, data nyata)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- modul 2 ----------
 def modulo_veriphone(fmt_e164):
     sep("VERIPHONE — Validasi & Operator")
     try:
@@ -233,16 +246,16 @@ def modulo_veriphone(fmt_e164):
             d = r.json()
             if d.get("status") == "success" or d.get("phone_valid"):
                 ok("Data berhasil diambil dari Veriphone")
-                dato("Nomor",        d.get("phone", "—"))
+                dato("Nomor", d.get("phone", "—"))
                 dato("Internasional", d.get("international_number", "—"))
-                dato("Lokal",         d.get("local_number", "—"))
-                dato("Negara",          d.get("country", "—"))
-                dato("Kode negara",   d.get("country_code", "—"))
-                dato("Prefiks",       d.get("country_prefix", "—"))
-                dato("Operator",     d.get("carrier", "—"))
-                dato("Tipe line",    d.get("phone_type", "—").upper())
-                dato("Valid",        "✓ YA" if d.get("phone_valid") else "✗ TIDAK")
-                dato("Wilayah",        d.get("phone_region", "—"))
+                dato("Lokal", d.get("local_number", "—"))
+                dato("Negara", d.get("country", "—"))
+                dato("Kode negara", d.get("country_code", "—"))
+                dato("Prefiks", d.get("country_prefix", "—"))
+                dato("Operator", d.get("carrier", "—"))
+                dato("Tipe line", d.get("phone_type", "—").upper())
+                dato("Valid", "✓ YA" if d.get("phone_valid") else "✗ TIDAK")
+                dato("Wilayah", d.get("phone_region", "—"))
             else:
                 warn("Veriphone tidak mengembalikan data untuk nomor ini")
         elif r.status_code == 429:
@@ -252,9 +265,8 @@ def modulo_veriphone(fmt_e164):
     except Exception as e:
         warn(f"Veriphone tidak tersedia: {type(e).__name__}")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 3 — NUMVERIFY (gratis dengan key demo)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- modul 3 ----------
 def modulo_numverify(fmt_e164, region):
     sep("NUMVERIFY — Operator & Line")
     phone_clean = fmt_e164.replace("+", "")
@@ -267,15 +279,15 @@ def modulo_numverify(fmt_e164, region):
             d = r.json()
             if d.get("valid"):
                 ok("Nomor divalidasi oleh NumVerify")
-                dato("Nomor",         d.get("number", "—"))
-                dato("Format lokal",   d.get("local_format", "—"))
-                dato("Internasional",  d.get("international_format", "—"))
-                dato("Negara",           d.get("country_name", "—"))
-                dato("Kode negara",    d.get("country_code", "—"))
-                dato("Prefiks",        d.get("country_prefix", "—"))
-                dato("Operator",      d.get("carrier", "—"))
-                dato("Tipe line",     d.get("line_type", "—").upper() if d.get("line_type") else "—")
-                dato("Lokasi",   d.get("location", "—"))
+                dato("Nomor", d.get("number", "—"))
+                dato("Format lokal", d.get("local_format", "—"))
+                dato("Internasional", d.get("international_format", "—"))
+                dato("Negara", d.get("country_name", "—"))
+                dato("Kode negara", d.get("country_code", "—"))
+                dato("Prefiks", d.get("country_prefix", "—"))
+                dato("Operator", d.get("carrier", "—"))
+                dato("Tipe line", d.get("line_type", "—").upper() if d.get("line_type") else "—")
+                dato("Lokasi", d.get("location", "—"))
             else:
                 warn("NumVerify: nomor tidak valid atau tidak ada data")
         else:
@@ -283,18 +295,15 @@ def modulo_numverify(fmt_e164, region):
     except Exception as e:
         warn(f"NumVerify tidak tersedia: {type(e).__name__}")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 4 — DNS & INFRASTRUKTUR (operator via DNS)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- modul 4 ----------
 def modulo_dns(fmt_e164, region):
     sep("DNS & INFRASTRUKTUR")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "")
-
     try:
         digits = phone_clean[::-1]
         enum_domain = ".".join(list(digits)) + ".e164.arpa"
         dato("Domain ENUM", enum_domain)
-
         try:
             naptr = dns.resolver.resolve(enum_domain, 'NAPTR')
             ok("Rekaman NAPTR ditemukan (ENUM)")
@@ -309,7 +318,6 @@ def modulo_dns(fmt_e164, region):
                 dato("  PTR", str(r))
         except Exception:
             pass
-
     except Exception as e:
         warn(f"DNS lookup gagal: {type(e).__name__}")
 
@@ -330,25 +338,21 @@ def modulo_dns(fmt_e164, region):
         for op in country_carriers[region]:
             print(f"    {D}• {op}{RS}")
 
-# ════════════════════════════════════════════════════════════════════[...]
-# MODUL 5 — WHATSAPP (verifikasi nyata)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- modul 5 ----------
 def modulo_whatsapp(fmt_e164):
     sep("WHATSAPP — Verifikasi akun")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "")
     try:
-        r = requests.get(
-            f"https://wa.me/{phone_clean}",
-            headers=HEADERS, timeout=10, allow_redirects=True
-        )
+        r = requests.get(f"https://wa.me/{phone_clean}", headers=HEADERS, timeout=10, allow_redirects=True)
         body = r.text.lower()
 
         if r.status_code == 200:
             if any(x in body for x in ["send message", "open whatsapp", "use whatsapp web", "whatsapp"]):
-                ok(f"✓ Nomor AKTIF di WhatsApp")
-                dato("Nomor",      fmt_e164)
-                dato("Tautan chat",   f"https://wa.me/{phone_clean}")
-                dato("Tautan langsung",f"https://api.whatsapp.com/send?phone={phone_clean}")
+                ok("✓ Nomor AKTIF di WhatsApp")
+                dato("Nomor", fmt_e164)
+                dato("Tautan chat", f"https://wa.me/{phone_clean}")
+                dato("Tautan langsung", f"https://api.whatsapp.com/send?phone={phone_clean}")
             else:
                 warn("Tidak dapat memastikan akun WhatsApp")
         elif r.status_code == 404:
@@ -357,29 +361,21 @@ def modulo_whatsapp(fmt_e164):
             warn(f"WhatsApp merespons {r.status_code}")
 
         try:
-            r2 = requests.get(
-                f"https://api.whatsapp.com/send?phone={phone_clean}",
-                headers=HEADERS, timeout=8, allow_redirects=True
-            )
+            r2 = requests.get(f"https://api.whatsapp.com/send?phone={phone_clean}", headers=HEADERS, timeout=8, allow_redirects=True)
             if r2.status_code == 200 and "phone" in r2.text.lower():
                 dato("Verifikasi API", "Nomor ditemukan di sistem WhatsApp")
         except Exception:
             pass
-
     except Exception as e:
         warn(f"Tidak dapat memverifikasi WhatsApp: {type(e).__name__}")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 6 — TELEGRAM (verifikasi)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- modul 6 ----------
 def modulo_telegram(fmt_e164):
     sep("TELEGRAM — Verifikasi akun")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "")
     try:
-        r = requests.get(
-            f"https://t.me/+{phone_clean}",
-            headers=HEADERS, timeout=10, allow_redirects=True
-        )
+        r = requests.get(f"https://t.me/+{phone_clean}", headers=HEADERS, timeout=10, allow_redirects=True)
         body = r.text.lower()
 
         if r.status_code == 200:
@@ -395,39 +391,31 @@ def modulo_telegram(fmt_e164):
             warn(f"Telegram merespons {r.status_code}")
 
         try:
-            r2 = requests.get(
-                f"https://tgstat.com/search?q={urllib.parse.quote(fmt_e164)}",
-                headers=HEADERS, timeout=8
-            )
+            r2 = requests.get(f"https://tgstat.com/search?q={urllib.parse.quote(fmt_e164)}", headers=HEADERS, timeout=8)
             if r2.status_code == 200 and phone_clean in r2.text:
                 ok("Nomor disebutkan di TGStat")
                 dato("TGStat", f"https://tgstat.com/search?q={urllib.parse.quote(fmt_e164)}")
         except Exception:
             pass
-
     except Exception as e:
         warn(f"Tidak dapat memverifikasi Telegram: {type(e).__name__}")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 7 — GRAVATAR (profil terkait hash nomor)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- modul 7 ----------
 def modulo_gravatar(fmt_e164):
     sep("GRAVATAR — Profil terkait")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").strip()
     md5_hash = hashlib.md5(phone_clean.encode()).hexdigest()
     try:
-        r = requests.get(
-            f"https://www.gravatar.com/{md5_hash}.json",
-            headers=HEADERS_JSON, timeout=8
-        )
+        r = requests.get(f"https://www.gravatar.com/{md5_hash}.json", headers=HEADERS_JSON, timeout=8)
         if r.status_code == 200:
             d = r.json()
             entry = d.get("entry", [{}])[0]
             ok("Profil Gravatar ditemukan untuk nomor ini")
-            dato("Nama tampilan",   entry.get("displayName", "—"))
-            dato("Username",       entry.get("preferredUsername", "—"))
-            dato("Avatar",         f"https://www.gravatar.com/avatar/{md5_hash}?s=200")
-            dato("URL profil",     f"https://gravatar.com/{entry.get('preferredUsername','')}")
+            dato("Nama tampilan", entry.get("displayName", "—"))
+            dato("Username", entry.get("preferredUsername", "—"))
+            dato("Avatar", f"https://www.gravatar.com/avatar/{md5_hash}?s=200")
+            dato("URL profil", f"https://gravatar.com/{entry.get('preferredUsername','')}")
             for acc in entry.get("accounts", []):
                 dato(f"Akun [{acc.get('shortname','?')}]", acc.get("url", "—"))
             about = entry.get("aboutMe", "")
@@ -440,41 +428,45 @@ def modulo_gravatar(fmt_e164):
     except Exception as e:
         warn(f"Gravatar tidak tersedia: {type(e).__name__}")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 8 — TWITTER/X (pencarian yang valid)
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- generic social link helpers ----------
+def print_valid_search_links(title, urls, note=""):
+    sep(title)
+    if note:
+        info(note)
+    for idx, url in enumerate(urls, start=1):
+        dato(f"{idx}. URL", url)
+
+
+def domain_url_ok(urls, timeout=10):
+    for url in urls:
+        r = safe_request(url, timeout)
+        if r is not None and r.status_code == 200:
+            return True, url, r.status_code
+    return False, urls[0] if urls else "", 0
+
+
+# ---------- social modules ----------
 def modulo_twitter(fmt_e164):
     sep("TWITTER/X — Pencarian & hasil valid")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
-    queries = [
-        fmt_e164,
-        phone_clean,
-        f"{phone_clean} phone",
-        f"\"{fmt_e164}\"",
+    urls = [
+        f"https://x.com/search?q={urllib.parse.quote(fmt_e164)}&src=typed_query",
+        f"https://x.com/search?q={urllib.parse.quote(phone_clean)}&src=typed_query",
+        f"https://x.com/search?q={urllib.parse.quote(f'"{fmt_e164}"')}&src=typed_query",
     ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("Pencarian Twitter/X dibuat dengan URL yang valid")
+        dato("Nomor", fmt_e164)
+        dato("URL pencarian", url)
+        info("Hasil real hanya terlihat di halaman Twitter/X; situs bisa membatasi index pencarian")
+    else:
+        warn("Tidak dapat mengakses Twitter/X dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
 
-    found = False
-    for query in queries:
-        url = f"https://x.com/search?q={urllib.parse.quote(query)}&src=typed_query"
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
-            if r.status_code == 200:
-                ok("Pencarian Twitter/X dibuat dengan URL yang valid")
-                dato("Nomor", fmt_e164)
-                dato("URL pencarian", url)
-                info("Hasil real hanya terlihat di halaman Twitter/X; situs dapat memblokir atau membatasi search index")
-                found = True
-                break
-        except Exception:
-            continue
 
-    if not found:
-        warn("Tidak dapat mengakses pencarian Twitter/X secara langsung dari terminal")
-        info(f"Coba buka: https://x.com/search?q={urllib.parse.quote(fmt_e164)}")
-
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 9 — FACEBOOK (pencarian yang valid)
-# ══════════════════════════════════════════════════════════════════[...]
 def modulo_facebook(fmt_e164):
     sep("FACEBOOK — Pencarian profil")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
@@ -483,25 +475,18 @@ def modulo_facebook(fmt_e164):
         f"https://www.facebook.com/search/people/?q={urllib.parse.quote(fmt_e164)}",
         f"https://www.facebook.com/search/top/?q={urllib.parse.quote(phone_clean)}",
     ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("Pencarian Facebook dibuat dengan URL yang valid")
+        dato("Nomor", fmt_e164)
+        dato("URL pencarian", url)
+        info("Facebook sering membatasi pencarian kontak publik, hasil bisa terbatas")
+    else:
+        warn("Tidak dapat membuka pencarian Facebook dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
 
-    for url in urls:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
-            if r.status_code == 200:
-                ok("Pencarian Facebook dibuat dengan URL yang valid")
-                dato("Nomor", fmt_e164)
-                dato("URL pencarian", url)
-                info("Facebook sering membatasi pencarian data telepon, jadi hasil bisa terbatas atau tak langsung terlihat")
-                return
-        except Exception:
-            continue
 
-    warn("Tidak dapat membuka pencarian Facebook dari terminal")
-    info(f"Coba buka: https://www.facebook.com/search/people/?q={urllib.parse.quote(fmt_e164)}")
-
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 10 — TIKTOK (pencarian yang valid)
-# ══════════════════════════════════════════════════════════════════[...]
 def modulo_tiktok(fmt_e164):
     sep("TIKTOK — Pencarian akun")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
@@ -510,25 +495,18 @@ def modulo_tiktok(fmt_e164):
         f"https://www.tiktok.com/search?q={urllib.parse.quote(phone_clean)}",
         f"https://www.tiktok.com/search?q={urllib.parse.quote(f'"{fmt_e164}"')}",
     ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("Pencarian TikTok dibuat dengan URL yang valid")
+        dato("Nomor", fmt_e164)
+        dato("URL pencarian", url)
+        info("TikTok tidak selalu menampilkan nomor telepon sebagai hasil publik")
+    else:
+        warn("Tidak dapat membuka pencarian TikTok dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
 
-    for url in urls:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
-            if r.status_code == 200:
-                ok("Pencarian TikTok dibuat dengan URL yang valid")
-                dato("Nomor", fmt_e164)
-                dato("URL pencarian", url)
-                info("TikTok tidak selalu menampilkan nomor telepon sebagai hasil pencarian publik")
-                return
-        except Exception:
-            continue
 
-    warn("Tidak dapat membuka pencarian TikTok dari terminal")
-    info(f"Coba buka: https://www.tiktok.com/search?q={urllib.parse.quote(fmt_e164)}")
-
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 11 — INSTAGRAM (pencarian valid, terbatas)
-# ══════════════════════════════════════════════════════════════════[...]
 def modulo_instagram(fmt_e164):
     sep("INSTAGRAM — Pencarian akun")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
@@ -537,25 +515,18 @@ def modulo_instagram(fmt_e164):
         f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(phone_clean)}",
         f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(f'"{fmt_e164}"')}",
     ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("Pencarian Instagram dibuat dengan URL yang valid")
+        dato("Nomor", fmt_e164)
+        dato("URL pencarian", url)
+        info("Instagram tidak menyediakan hasil nomor telepon yang andal secara publik")
+    else:
+        warn("Tidak dapat membuka pencarian Instagram dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
 
-    for url in urls:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
-            if r.status_code == 200:
-                ok("Pencarian Instagram dibuat dengan URL yang valid")
-                dato("Nomor", fmt_e164)
-                dato("URL pencarian", url)
-                info("Instagram tidak menyediakan hasil pencarian nomor telpon yang dapat diandalkan secara publik")
-                return
-        except Exception:
-            continue
 
-    warn("Tidak dapat membuka pencarian Instagram dari terminal")
-    info(f"Coba buka: https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(fmt_e164)}")
-
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 12 — LINKEDIN (pencarian valid)
-# ══════════════════════════════════════════════════════════════════[...]
 def modulo_linkedin(fmt_e164):
     sep("LINKEDIN — Pencarian profil profesional")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
@@ -564,63 +535,112 @@ def modulo_linkedin(fmt_e164):
         f"https://www.linkedin.com/search/results/people/?keywords={urllib.parse.quote(phone_clean)}",
         f"https://www.linkedin.com/search/results/all/?keywords={urllib.parse.quote(f'phone:{phone_clean}')}",
     ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("Pencarian LinkedIn dibuat dengan URL yang valid")
+        dato("Nomor", fmt_e164)
+        dato("URL pencarian", url)
+        info("LinkedIn membatasi hasil publik, tapi tautan pencarian tetap valid")
+    else:
+        warn("Tidak dapat membuka pencarian LinkedIn secara langsung")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
 
-    for url in urls:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
-            if r.status_code == 200:
-                ok("Pencarian LinkedIn dibuat dengan URL yang valid")
-                dato("Nomor", fmt_e164)
-                dato("URL pencarian", url)
-                info("LinkedIn membatasi hasil yang muncul di publik, tetapi tautan pencarian tetap valid")
-                return
-        except Exception:
-            continue
 
-    warn("Tidak dapat membuka pencarian LinkedIn secara langsung")
-    info(f"Coba buka: https://www.linkedin.com/search/results/people/?keywords={urllib.parse.quote(fmt_e164)}")
-
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 13 — GETCONTACT (database kontak global - improved)
-# ══════════════════════════════════════════════════════════════════[...]
 def modulo_getcontact(fmt_e164):
     sep("GETCONTACT — Database kontak global")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
-    
-    info("GetContact adalah aplikasi kontak yang mengumpulkan data nomor telepon global")
-    ok("Alternatif akses ke GetContact:")
-    
-    # Opsi 1: Direct URL (may return 404 for privacy)
-    url1 = f"https://www.getcontact.com/phone/{phone_clean}"
-    dato("1. URL Profil langsung", url1)
-    info("   (Sering tidak tersedia untuk privasi, coba gunakan aplikasi mobile)")
-    
-    # Opsi 2: Reverse lookup via GetContact API endpoint
-    url2 = f"https://www.getcontact.com/search?q={urllib.parse.quote(fmt_e164)}"
-    dato("2. URL Pencarian", url2)
-    info("   (Akses melalui halaman pencarian GetContact)")
-    
-    # Opsi 3: Suggest alternative tools
+    urls = [
+        f"https://www.getcontact.com/search?q={urllib.parse.quote(fmt_e164)}",
+        f"https://www.getcontact.com/phone/{phone_clean}",
+    ]
+    info("GetContact sering membatasi lookup nomor telepon publik karena privasi")
+    status, url, code = domain_url_ok(urls)
+    if status:
+        ok("GetContact URL valid dan dapat dibuka")
+        dato("Nomor", fmt_e164)
+        dato("URL", url)
+    else:
+        warn("GetContact tidak membuka hasil atau mengembalikan 404")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
     print()
-    info("Alternatif tools untuk lookup nomor telepon:")
+    info("Alternatif tools untuk reverse phone lookup:")
     print(f"    {D}• TrueCaller: https://www.truecaller.com/search/{urllib.parse.quote(phone_clean)}{RS}")
     print(f"    {D}• WhitePages: https://www.whitepages.com/phone/{phone_clean}{RS}")
     print(f"    {D}• Reverse Phone Lookup: https://www.reversephonelookup.com/phone/{phone_clean}{RS}")
-    
-    # Try the search endpoint
-    try:
-        r = requests.get(url2, headers=HEADERS, timeout=10, allow_redirects=True)
-        if r.status_code == 200:
-            ok("GetContact search URL berhasil diakses")
-            dato("Status", "URL valid dan dapat dibuka")
-        else:
-            warn(f"GetContact merespons {r.status_code}")
-    except Exception as e:
-        warn(f"GetContact tidak dapat diakses: {type(e).__name__}")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MODUL 14 — RINGKASAN INTELIGENSI
-# ══════════════════════════════════════════════════════════════════[...]
+
+def modulo_truecaller(fmt_e164):
+    sep("TRUECALLER — Reverse lookup")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.truecaller.com/search/{urllib.parse.quote(phone_clean)}",
+        f"https://www.truecaller.com/search/{urllib.parse.quote(fmt_e164)}",
+    ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("TrueCaller URL valid")
+        dato("Nomor", fmt_e164)
+        dato("URL", url)
+        info("TrueCaller sering membatasi hasil publik, tapi URL pencarian tetap valid")
+    else:
+        warn("Tidak dapat membuka TrueCaller dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
+
+
+def modulo_whitepages(fmt_e164):
+    sep("WHITEPAGES — Reverse lookup")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.whitepages.com/phone/{phone_clean}",
+        f"https://www.whitepages.com/phone/{urllib.parse.quote(fmt_e164)}",
+    ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("WhitePages URL valid")
+        dato("Nomor", fmt_e164)
+        dato("URL", url)
+    else:
+        warn("WhitePages tidak dapat diakses dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
+
+
+def modulo_reverse_phone_lookup(fmt_e164):
+    sep("REVERSE PHONE LOOKUP — Search")
+    phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
+    urls = [
+        f"https://www.reversephonelookup.com/phone/{phone_clean}",
+        f"https://www.reversephonelookup.com/search?number={urllib.parse.quote(phone_clean)}",
+    ]
+    ok, url, status = domain_url_ok(urls)
+    if ok:
+        ok("Reverse Phone Lookup URL valid")
+        dato("Nomor", fmt_e164)
+        dato("URL", url)
+    else:
+        warn("Reverse Phone Lookup tidak dapat diakses dari terminal")
+        for u in urls:
+            print(f"    {D}• {u}{RS}")
+
+
+def modulo_social_all(fmt_e164):
+    sep("SEMUA MODUL SOSIAL")
+    info("Menjalankan pencarian secara bertahap untuk semua platform sosial dan reverse lookup")
+    modulo_twitter(fmt_e164)
+    modulo_facebook(fmt_e164)
+    modulo_tiktok(fmt_e164)
+    modulo_instagram(fmt_e164)
+    modulo_linkedin(fmt_e164)
+    modulo_getcontact(fmt_e164)
+    modulo_truecaller(fmt_e164)
+    modulo_whitepages(fmt_e164)
+    modulo_reverse_phone_lookup(fmt_e164)
+
+
+# ---------- summary ----------
 def modulo_resumen(phone_raw, fmt_e164, fmt_intl, region, parsed):
     sep("RINGKASAN INTELIGENSI")
     print(f"\n  {C}{B}Target:{RS}        {W}{B}{phone_raw}{RS}")
@@ -636,12 +656,10 @@ def modulo_resumen(phone_raw, fmt_e164, fmt_intl, region, parsed):
 
     print(f"\n  {D}Analisis selesai — Ciberbrigada OSINT Suite v2.0{RS}\n")
 
-# ══════════════════════════════════════════════════════════════════[...]
-# MAIN
-# ══════════════════════════════════════════════════════════════════[...]
+
+# ---------- main ----------
 def main():
     banner()
-
     print(f"  {W}Masukkan nomor dengan kode negara:{RS}")
     print(f"  {D}Contoh: +62 812 3456-7890 | +1 555 123 4567 | +34 612 345 678{RS}\n")
 
@@ -677,7 +695,10 @@ def main():
             ("10", "TikTok          — Pencarian & verifikasi"),
             ("11", "Instagram       — Pencarian pengguna"),
             ("12", "LinkedIn        — Pencarian profil profesional"),
-            ("13", "GetContact      — Database kontak global (improved)"),
+            ("13", "GetContact      — Database kontak global"),
+            ("14", "TrueCaller      — Reverse lookup"),
+            ("15", "WhitePages      — Reverse phone lookup"),
+            ("16", "ReverseLookup   — Search by phone"),
             ("0", "SEMUA MODUL"),
         ]
         for num, desc in modulos:
@@ -686,11 +707,11 @@ def main():
 
         print()
         try:
-            sel = input(f"  {C}▸ Pilihan (contoh: 0 atau 2,5,6,8):{RS} ").strip()
+            sel = input(f"  {C}▸ Pilihan (contoh: 0 atau 2,5,6,8,13,14):{RS} ").strip()
         except (KeyboardInterrupt, EOFError):
             sys.exit(0)
 
-        selected = ["2","3","4","5","6","7","8","9","10","11","12","13"] if sel == "0" else [s.strip() for s in sel.split(",")]
+        selected = ["2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"] if sel == "0" else [s.strip() for s in sel.split(",")]
         print()
 
         if "2" in selected: modulo_veriphone(fmt_e164)
@@ -705,6 +726,9 @@ def main():
         if "11" in selected: modulo_instagram(fmt_e164)
         if "12" in selected: modulo_linkedin(fmt_e164)
         if "13" in selected: modulo_getcontact(fmt_e164)
+        if "14" in selected: modulo_truecaller(fmt_e164)
+        if "15" in selected: modulo_whitepages(fmt_e164)
+        if "16" in selected: modulo_reverse_phone_lookup(fmt_e164)
 
         modulo_resumen(phone_raw, fmt_e164, fmt_intl, region, parsed)
 
@@ -719,6 +743,7 @@ def main():
             sys.exit(0)
 
         banner()
+
 
 if __name__ == "__main__":
     main()
