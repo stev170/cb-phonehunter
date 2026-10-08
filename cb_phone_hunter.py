@@ -330,7 +330,7 @@ def modulo_dns(fmt_e164, region):
         for op in country_carriers[region]:
             print(f"    {D}• {op}{RS}")
 
-# ════���═════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════[...]
 # MODUL 5 — WHATSAPP (verifikasi nyata)
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_whatsapp(fmt_e164):
@@ -581,25 +581,42 @@ def modulo_linkedin(fmt_e164):
     info(f"Coba buka: https://www.linkedin.com/search/results/people/?keywords={urllib.parse.quote(fmt_e164)}")
 
 # ══════════════════════════════════════════════════════════════════[...]
-# MODUL 13 — GETCONTACT (database kontak global)
+# MODUL 13 — GETCONTACT (database kontak global - improved)
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_getcontact(fmt_e164):
     sep("GETCONTACT — Database kontak global")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").replace("-", "")
-    url = f"https://www.getcontact.com/phone/{phone_clean}"
+    
+    info("GetContact adalah aplikasi kontak yang mengumpulkan data nomor telepon global")
+    ok("Alternatif akses ke GetContact:")
+    
+    # Opsi 1: Direct URL (may return 404 for privacy)
+    url1 = f"https://www.getcontact.com/phone/{phone_clean}"
+    dato("1. URL Profil langsung", url1)
+    info("   (Sering tidak tersedia untuk privasi, coba gunakan aplikasi mobile)")
+    
+    # Opsi 2: Reverse lookup via GetContact API endpoint
+    url2 = f"https://www.getcontact.com/search?q={urllib.parse.quote(fmt_e164)}"
+    dato("2. URL Pencarian", url2)
+    info("   (Akses melalui halaman pencarian GetContact)")
+    
+    # Opsi 3: Suggest alternative tools
+    print()
+    info("Alternatif tools untuk lookup nomor telepon:")
+    print(f"    {D}• TrueCaller: https://www.truecaller.com/search/{urllib.parse.quote(phone_clean)}{RS}")
+    print(f"    {D}• WhitePages: https://www.whitepages.com/phone/{phone_clean}{RS}")
+    print(f"    {D}• Reverse Phone Lookup: https://www.reversephonelookup.com/phone/{phone_clean}{RS}")
+    
+    # Try the search endpoint
     try:
-        r = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
+        r = requests.get(url2, headers=HEADERS, timeout=10, allow_redirects=True)
         if r.status_code == 200:
-            ok("URL GetContact valid dan dapat dibuka")
-            dato("Nomor", fmt_e164)
-            dato("URL profil", url)
-            info("GetContact adalah aplikasi kontak yang menggabungkan data nomor; hasil publik sangat bergantung pada database dan privasi")
+            ok("GetContact search URL berhasil diakses")
+            dato("Status", "URL valid dan dapat dibuka")
         else:
             warn(f"GetContact merespons {r.status_code}")
-            info(f"Coba buka manual: {url}")
     except Exception as e:
         warn(f"GetContact tidak dapat diakses: {type(e).__name__}")
-        info(f"Coba buka manual: {url}")
 
 # ══════════════════════════════════════════════════════════════════[...]
 # MODUL 14 — RINGKASAN INTELIGENSI
@@ -660,7 +677,7 @@ def main():
             ("10", "TikTok          — Pencarian & verifikasi"),
             ("11", "Instagram       — Pencarian pengguna"),
             ("12", "LinkedIn        — Pencarian profil profesional"),
-            ("13", "GetContact      — Database kontak global"),
+            ("13", "GetContact      — Database kontak global (improved)"),
             ("0", "SEMUA MODUL"),
         ]
         for num, desc in modulos:
