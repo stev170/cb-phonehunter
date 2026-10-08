@@ -7,45 +7,51 @@
 
 import sys
 import os
-import re
-import json
-import socket
-import urllib.parse
-import hashlib
 
+# Deteksi Termux/Android
+IS_TERMUX = (
+    os.environ.get("PREFIX", "").startswith("/data/data/com.termux")
+    or os.path.exists("/data/data/com.termux/files/usr/bin/pkg")
+    or os.environ.get("ANDROID_ROOT") is not None
+)
 
-def ensure_dependencies():
+# Install dependencies
+try:
+    import requests
+    import phonenumbers
+    from phonenumbers import geocoder, carrier, timezone as pn_timezone
+    import dns.resolver
+    from colorama import init, Fore, Style
+except ImportError:
+    print("[*] Menginstal dependensi yang diperlukan...")
+    if IS_TERMUX:
+        os.system("python -m pip install requests colorama phonenumbers dnspython -q 2>/dev/null")
+    else:
+        os.system("pip install requests colorama phonenumbers dnspython --break-system-packages -q 2>/dev/null")
+    
     try:
         import requests
         import phonenumbers
         from phonenumbers import geocoder, carrier, timezone as pn_timezone
         import dns.resolver
         from colorama import init, Fore, Style
-        init(autoreset=True)
-        return
-    except ImportError:
-        pass
+        print("[✓] Dependensi berhasil diinstal\n")
+    except ImportError as e:
+        print(f"[✗] Gagal menginstal: {e}")
+        print("\nCoba install manual:")
+        if IS_TERMUX:
+            print("  python -m pip install requests colorama phonenumbers dnspython")
+        else:
+            print("  pip install requests colorama phonenumbers dnspython")
+        sys.exit(1)
 
-    is_termux = (
-        os.environ.get("PREFIX", "").startswith("/data/data/com.termux")
-        or os.path.exists("/data/data/com.termux/files/usr/bin/pkg")
-        or os.environ.get("ANDROID_ROOT") is not None
-    )
+init(autoreset=True)
 
-    if is_termux:
-        os.system("python -m pip install requests colorama phonenumbers dnspython -q")
-    else:
-        os.system("python -m pip install requests colorama phonenumbers dnspython --break-system-packages -q")
-
-    import requests
-    import phonenumbers
-    from phonenumbers import geocoder, carrier, timezone as pn_timezone
-    import dns.resolver
-    from colorama import init, Fore, Style
-    init(autoreset=True)
-
-
-ensure_dependencies()
+import re
+import json
+import socket
+import urllib.parse
+import hashlib
 
 # ── Warna ─────────────────────────────────────────────────────────────[...]
 C  = Fore.CYAN
@@ -213,7 +219,7 @@ def modulo_analisis(phone_raw):
         warn("Masukkan kode negara. Contoh: +62 812 3456-7890")
         return None, None, None, None
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ═══════════════════════════════════════════════════��══════════════[...]
 # MODUL 2 — VERIPHONE API (gratis, tanpa key, data nyata)
 # ══════════════════════════════════════════════════════════════════[...]
 def modulo_veriphone(fmt_e164):
@@ -316,6 +322,7 @@ def modulo_dns(fmt_e164, region):
         "PE": ["Claro Peru", "Movistar Peru", "Entel Peru", "Bitel"],
         "US": ["AT&T", "Verizon", "T-Mobile", "Sprint"],
         "ES": ["Movistar Spanyol", "Vodafone Spanyol", "Orange Spanyol", "Yoigo"],
+        "ID": ["Telkomsel", "Indosat", "XL Axiata", "Tri"],
     }
 
     if region and region in country_carriers:
@@ -403,7 +410,7 @@ def modulo_telegram(fmt_e164):
 
 # ══════════════════════════════════════════════════════════════════[...]
 # MODUL 7 — GRAVATAR (profil terkait hash nomor)
-# ════���═════════════════════════════════════════════════════════════[...]
+# ══════════════════════════════════════════════════════════════════[...]
 def modulo_gravatar(fmt_e164):
     sep("GRAVATAR — Profil terkait")
     phone_clean = fmt_e164.replace("+", "").replace(" ", "").strip()
